@@ -11,10 +11,14 @@ const program = createProgram(
   gl,
   `#version 300 es
 
-  uniform vec2 uPosition;
-  uniform float uSize;
+  in vec2 uPosition;
+  in float uSize;
+  in vec3 uColor;
+
+  out vec3 vColor;
 
 void main() {
+    vColor = uColor;
   gl_Position = vec4(uPosition, 0.0, 1.0);
   gl_PointSize = uSize;
 }
@@ -23,22 +27,22 @@ void main() {
 
 precision highp float;
 
-uniform vec3 uColor;
+in vec3 vColor;
 
 out vec4 fragColor;
 
 void main() {
-    fragColor = vec4(uColor, 1.0);
+    fragColor = vec4(vColor, 1.0);
 }
 `
 );
 
-const positionUniformLocation = gl.getUniformLocation(program, "uPosition");
-const sizeUniformLocation = gl.getUniformLocation(program, "uSize");
-const colorUniformLocation = gl.getUniformLocation(program, "uColor");
+const positionUniformLocation = gl.getAttribLocation(program, "uPosition");
+const sizeUniformLocation = gl.getAttribLocation(program, "uSize");
+const colorUniformLocation = gl.getAttribLocation(program, "uColor");
 
-gl.uniform2f(positionUniformLocation, 0, 0);
-gl.uniform1f(sizeUniformLocation, 150);
-gl.uniform3f(colorUniformLocation, 1, 0, 1);
+gl.vertexAttrib2f(positionUniformLocation, 0, 0);
+gl.vertexAttrib1f(sizeUniformLocation, 150);
+gl.vertexAttrib3f(colorUniformLocation, 1, 0, 1);
 
 gl.drawArrays(gl.POINTS, 0, 1);
