@@ -32,18 +32,6 @@ gl.clearDepth(1.0);
 
 const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 
-const positionBufferData = new Float32Array([
-  0, 0, 0, 1, 0.95, 0.3,
-
-  0, 0, 0.95, 0.3, 0.58, -80,
-
-  0, 0, 0.58, -80, -0.58, -80,
-
-  0, 0, -0.58, -80, -0.95, 0.3,
-
-  0, 0, -0.95, 0.3, 0, 1,
-]);
-
 const arrayVertexData = new Float32Array([
   0, 0, 0.0, 1.0, 0.95106, 0.30902,
 
