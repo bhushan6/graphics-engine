@@ -34,7 +34,15 @@ gl.clearDepth(1.0);
 
 const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 
-const positionData = new Float32Array([0.0, 0.0, 0.0, 0.5, 0.5, 0.0]);
+const positionData = new Float32Array([
+  -0.5, 0.5,
+
+  0.5, 0.5,
+
+  0.5, -0.5,
+
+  -0.5, -0.5,
+]);
 
 const positionAttribLocation = gl.getAttribLocation(program, "aPosition");
 
@@ -53,7 +61,21 @@ gl.vertexAttribPointer(
 
 gl.enableVertexAttribArray(positionAttribLocation);
 
-const uvData = new Float32Array([0.0, 0.0, 0.0, 1.0, 1.0, 0.0]);
+const indexData = new Uint8Array([0, 1, 2, 0, 2, 3]);
+const indexBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexData, gl.STATIC_DRAW);
+
+const uvData = new Float32Array([
+  0, 1,
+
+  1, 1,
+
+  1, 0,
+
+  0, 0,
+]);
+
 const uvAttribLocation = gl.getAttribLocation(program, "uv");
 
 const uvBuffer = gl.createBuffer();
@@ -64,57 +86,75 @@ gl.vertexAttribPointer(uvAttribLocation, 2, gl.FLOAT, false, 4 * 2, 0 * 4);
 
 gl.enableVertexAttribArray(uvAttribLocation);
 
+const loadImage = () => {
+  return new Promise<HTMLImageElement>((resolve) => {
+    const image = new Image();
+    image.onload = () => {
+      // console.log("image loaded", image.width, image.height, image.);
+
+      resolve(image);
+    };
+    image.src = "/cat.jpeg";
+  });
+};
+
 //texture
-const pixelData = new Uint8Array([
-  255, 0, 0,
+const draw = async () => {
+  // const pixelData = new Uint8Array([
+  //   255, 0, 0,
 
-  255, 0, 255,
+  //   255, 0, 255,
 
-  0, 255, 0,
+  //   0, 255, 0,
 
-  0, 255, 255,
+  //   0, 255, 255,
 
-  255, 255, 255,
+  //   255, 255, 255,
 
-  255, 0, 0,
+  //   255, 0, 0,
 
-  255, 0, 255,
+  //   255, 0, 255,
 
-  0, 255, 0,
+  //   0, 255, 0,
 
-  0, 255, 255,
+  //   0, 255, 255,
 
-  255, 255, 255,
+  //   255, 255, 255,
 
-  255, 0, 0,
+  //   255, 0, 0,
 
-  255, 0, 255,
+  //   255, 0, 255,
 
-  0, 255, 0,
+  //   0, 255, 0,
 
-  0, 255, 255,
+  //   0, 255, 255,
 
-  255, 255, 255,
+  //   255, 255, 255,
 
-  255, 0, 0,
-]);
+  //   255, 0, 255,
+  // ]);
 
-const texture = gl.createTexture();
-gl.bindTexture(gl.TEXTURE_2D, texture);
-gl.texImage2D(
-  gl.TEXTURE_2D,
-  0,
-  gl.RGB,
-  4,
-  4,
-  0,
-  gl.RGB,
-  gl.UNSIGNED_BYTE,
-  pixelData
-);
+  const image = await loadImage();
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGB,
+    image.width,
+    image.height,
+    0,
+    gl.RGB,
+    gl.UNSIGNED_BYTE,
+    image
+  );
 
-gl.generateMipmap(gl.TEXTURE_2D);
+  gl.generateMipmap(gl.TEXTURE_2D);
 
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.drawElements(gl.TRIANGLES, indexData.length, gl.UNSIGNED_BYTE, 0);
+};
+
+draw();
