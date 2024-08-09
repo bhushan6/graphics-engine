@@ -60,15 +60,61 @@ const uvBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, uvData, gl.STATIC_DRAW);
 
-gl.vertexAttribPointer(
-  uvAttribLocation,
-  2,
-  gl.FLOAT,
-  false,
-  4 * 2,
-  0 * 4
-);
+gl.vertexAttribPointer(uvAttribLocation, 2, gl.FLOAT, false, 4 * 2, 0 * 4);
 
 gl.enableVertexAttribArray(uvAttribLocation);
+
+//texture
+const pixelData = new Uint8Array([
+  255, 0, 0,
+
+  255, 0, 255,
+
+  0, 255, 0,
+
+  0, 255, 255,
+
+  255, 255, 255,
+
+  255, 0, 0,
+
+  255, 0, 255,
+
+  0, 255, 0,
+
+  0, 255, 255,
+
+  255, 255, 255,
+
+  255, 0, 0,
+
+  255, 0, 255,
+
+  0, 255, 0,
+
+  0, 255, 255,
+
+  255, 255, 255,
+
+  255, 0, 0,
+]);
+
+const texture = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, texture);
+gl.texImage2D(
+  gl.TEXTURE_2D,
+  0,
+  gl.RGB,
+  4,
+  4,
+  0,
+  gl.RGB,
+  gl.UNSIGNED_BYTE,
+  pixelData
+);
+
+gl.generateMipmap(gl.TEXTURE_2D);
+
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
 
 gl.drawArrays(gl.TRIANGLES, 0, 3);
