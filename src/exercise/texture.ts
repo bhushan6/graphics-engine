@@ -20,9 +20,10 @@ const fragmentShaderSource = `#version 300 es
     out vec4 fragColor;
 
     uniform sampler2D uSampler;
+    uniform sampler2D uPixelSampler;
 
     void main() {
-        fragColor = texture(uSampler, vUV);
+        fragColor = texture(uSampler, vUV) * texture(uPixelSampler, vUV);
     }
 `;
 
@@ -100,43 +101,55 @@ const loadImage = () => {
 
 //texture
 const draw = async () => {
-  // const pixelData = new Uint8Array([
-  //   255, 0, 0,
+  const pixelData = new Uint8Array([
+    255, 0, 0,
 
-  //   255, 0, 255,
+    255, 0, 255,
 
-  //   0, 255, 0,
+    0, 255, 0,
 
-  //   0, 255, 255,
+    0, 255, 255,
 
-  //   255, 255, 255,
+    255, 255, 255,
 
-  //   255, 0, 0,
+    255, 0, 0,
 
-  //   255, 0, 255,
+    255, 0, 255,
 
-  //   0, 255, 0,
+    0, 255, 0,
 
-  //   0, 255, 255,
+    0, 255, 255,
 
-  //   255, 255, 255,
+    255, 255, 255,
 
-  //   255, 0, 0,
+    255, 0, 0,
 
-  //   255, 0, 255,
+    255, 0, 255,
 
-  //   0, 255, 0,
+    0, 255, 0,
 
-  //   0, 255, 255,
+    0, 255, 255,
 
-  //   255, 255, 255,
+    255, 255, 255,
 
-  //   255, 0, 255,
-  // ]);
+    255, 0, 255,
+  ]);
 
   const image = await loadImage();
+
+  const pixelSamplerUnit = 0;
+  const textureSamplerUnit = 1;
+
+  gl.uniform1i(gl.getUniformLocation(program, "uSampler"), textureSamplerUnit);
+
+  gl.uniform1i(
+    gl.getUniformLocation(program, "uPixelSampler"),
+    pixelSamplerUnit
+  );
+
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
   const texture = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0 + textureSamplerUnit);
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(
     gl.TEXTURE_2D,
@@ -152,6 +165,25 @@ const draw = async () => {
 
   gl.generateMipmap(gl.TEXTURE_2D);
 
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  const pixelTexture = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0 + pixelSamplerUnit);
+  gl.bindTexture(gl.TEXTURE_2D, pixelTexture);
+
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGB,
+    4,
+    4,
+    0,
+    gl.RGB,
+    gl.UNSIGNED_BYTE,
+    pixelData
+  );
+
+  gl.generateMipmap(gl.TEXTURE_2D);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
   gl.drawElements(gl.TRIANGLES, indexData.length, gl.UNSIGNED_BYTE, 0);
