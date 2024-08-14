@@ -1,18 +1,21 @@
 import { Geometry, Material } from ".";
+import { Object3D } from "./Object3D";
 
-export class Mesh {
+export class Mesh extends Object3D {
   private _geometry: Geometry;
   private _material: Material;
 
   constructor(geometry: Geometry, material: Material) {
+    super();
     this._geometry = geometry;
     this._material = material;
-    this._geometry.addIndices();
-    this._geometry.bindBuffers(this._material.program);
   }
 
-  public draw() {
-    this._geometry.bindBuffers(this._material.program);
-    this._geometry.draw();
+  get geometry() {
+    return this._geometry;
+  }
+
+  get material() {
+    return this._material;
   }
 }

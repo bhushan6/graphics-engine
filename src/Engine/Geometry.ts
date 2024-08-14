@@ -1,74 +1,47 @@
-type AttributesType = {
-  [key: string]: {
-    data: Float32Array | Uint16Array;
-    size: number;
-    offset: number;
-  };
-};
+export type AttributeData =
+  | Float32Array
+  | Int8Array
+  | Int16Array
+  | Int32Array
+  | Uint8Array
+  | Uint8ClampedArray
+  | Uint16Array
+  | Uint32Array;
 
+export type AttributeInterface = {
+  data: AttributeData;
+  size: number;
+  needsUpdate?: boolean;
+};
 export class Geometry {
-  private _attributes: AttributesType;
-  private GL: WebGL2RenderingContext;
+  private _attributes: { [key: string]: AttributeInterface } = {};
+
   private _indices: Uint16Array;
+
+  public needsUpdate = true;
+
+  constructor(attributes: { [key: string]: AttributeInterface }) {
+    const { index, ...rest } = attributes;
+    for (const key in rest) {
+      this._attributes[key] = attributes[key];
+      this._attributes[key].needsUpdate = true;
+    }
+    this._attributes.index = {
+      data: index.data as Uint16Array,
+      size: 1,
+    };
+    this._indices = index.data as Uint16Array;
+  }
 
   public get attributes() {
     return this._attributes;
   }
 
-  constructor(
-    gl: WebGL2RenderingContext,
-    attributes: AttributesType,
-    indices: Uint16Array
-  ) {
-    this._attributes = attributes;
-    this.GL = gl;
+  public set indices(indices: Uint16Array) {
     this._indices = indices;
   }
 
-  private createBuffer = (name: string, data: Float32Array | Uint16Array) => {
-    const buffer = this.GL.createBuffer();
-    this.GL.bindBuffer(this.GL.ARRAY_BUFFER, buffer);
-    this.GL.bufferData(this.GL.ARRAY_BUFFER, data, this.GL.STATIC_DRAW);
-    return buffer;
-  };
-
-  private bindBuffer = (
-    program: WebGLProgram,
-    name: string,
-    buffer: WebGLBuffer,
-    size: number
-  ) => {
-    const location = this.GL.getAttribLocation(program, name);
-    this.GL.bindBuffer(this.GL.ARRAY_BUFFER, buffer);
-    this.GL.vertexAttribPointer(location, size, this.GL.FLOAT, false, 0, 0);
-    this.GL.enableVertexAttribArray(location);
-  };
-
-  public bindBuffers = (program: WebGLProgram) => {
-    this.GL.useProgram(program);
-    Object.keys(this._attributes).forEach((bufferName) => {
-      const data = this._attributes[bufferName].data;
-      const buffer = this.createBuffer(bufferName, data);
-      if (!buffer) {
-        throw new Error("Could not create buffer");
-      }
-      this.bindBuffer(
-        program,
-        bufferName,
-        buffer,
-        this._attributes[bufferName].size
-      );
-    });
-  };
-
-  public addIndices = () => {
-    const data = this._indices;
-    const buffer = this.GL.createBuffer();
-    this.GL.bindBuffer(this.GL.ELEMENT_ARRAY_BUFFER, buffer);
-    this.GL.bufferData(this.GL.ELEMENT_ARRAY_BUFFER, data, this.GL.STATIC_DRAW);
-  };
-
-  public draw = () => {
-    this.GL.drawArrays(this.GL.TRIANGLES, 0, this._indices.length);
-  };
+  public get indices() {
+    return this._indices;
+  }
 }

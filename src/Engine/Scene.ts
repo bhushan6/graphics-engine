@@ -1,25 +1,22 @@
-import { Mesh, Renderer } from ".";
+import { Mesh } from ".";
 
 export class Scene {
-  private renderer: Renderer;
 
-  private meshes: Mesh[] = [];
+  private _meshes: Mesh[] = [];
 
-  constructor(renderer: Renderer) {
-    this.renderer = renderer;
-  }
+  constructor() {}
 
   public add(mesh: Mesh) {
-    this.meshes.push(mesh);
+    this._meshes.push(mesh);
   }
 
   public remove(mesh: Mesh) {
-    this.meshes = this.meshes.filter((m) => m !== mesh);
+    this._meshes = this._meshes.filter((m) => m !== mesh);
   }
 
-  public render() {
-    this.meshes.forEach((mesh) => {
-      mesh.draw();
-    });
+  public get meshes() {
+    return this._meshes;
   }
+
+  public render() {}
 }

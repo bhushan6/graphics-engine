@@ -22,7 +22,7 @@ export const createGLContext = () => {
   return gl;
 };
 
-const createShader = (
+export const createShader = (
   gl: WebGL2RenderingContext,
   shader: string,
   type: "vertex" | "fragment"
@@ -61,8 +61,6 @@ export const createProgram = (
     console.log(gl.getShaderInfoLog(fragmentShaderObject));
     throw new Error("Could not link program");
   }
-  gl.useProgram(program);
-
   return program;
 };
 
