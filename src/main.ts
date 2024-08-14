@@ -2,6 +2,7 @@ import { quat } from "gl-matrix";
 import { Geometry, Mesh, Renderer, Material, Scene } from "./Engine";
 import { Camera } from "./Engine/Camera";
 import "./style.css";
+import { getBoxGeomertyData, getPlaneGeomertyData } from "./Engine/utils";
 
 const canvas = document.getElementById("webglCanvas") as HTMLCanvasElement;
 
@@ -22,41 +23,10 @@ const camera = new Camera({
   far: 100,
 });
 
+const boxAttributes = getBoxGeomertyData();
+const planeAttributes = getPlaneGeomertyData();
 const geometry = new Geometry({
-  position: {
-    size: 3,
-    data: new Float32Array([
-      0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5, 0.5,
-      -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5,
-      0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5,
-      0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5,
-      0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5,
-      -0.5, 0.5, 0.5, -0.5, 0.5,
-    ]),
-  },
-  normal: {
-    size: 3,
-    data: new Float32Array([
-      1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
-      0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
-      -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
-      0, 0, 1,
-    ]),
-  },
-  uv: {
-    size: 2,
-    data: new Float32Array([
-      0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0,
-      1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0,
-    ]),
-  },
-  index: {
-    size: 1,
-    data: new Uint8Array([
-      0, 2, 1, 2, 3, 1, 4, 6, 5, 6, 7, 5, 8, 10, 9, 10, 11, 9, 12, 14, 13, 14,
-      15, 13, 16, 18, 17, 18, 19, 17, 20, 22, 21, 22, 23, 21,
-    ]),
-  },
+  ...boxAttributes,
   color: {
     size: 3,
     data: new Float32Array([
@@ -75,7 +45,7 @@ const geometry = new Geometry({
       0, 1, 1, 0, 1, 1, 0, 1, 1,
 
       1, 0, 1, 1, 0, 1, 1, 0, 1,
-    ])
+    ]),
   },
 });
 
@@ -90,13 +60,11 @@ const material = new Material({
   uniform mat4 projectionMatrix;
 
   in vec3 normal;
-  out vec3 vNormal;
 
   in vec3 color;
   out vec3 vColor;
 
   void main() {
-      vNormal = normal;
       vColor = color;
       gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
   }
@@ -104,7 +72,6 @@ const material = new Material({
   fragmentShader: `#version 300 es
   precision highp float;
 
-  in vec3 vNormal;
   in vec3 vColor;
 
   out vec4 fragColor;
@@ -115,9 +82,36 @@ const material = new Material({
 `,
 });
 
-const mesh = new Mesh(geometry, material);
+const boxMesh = new Mesh(geometry, material);
 
-scene.add(mesh);
+const planeGeometry = new Geometry({
+  ...planeAttributes,
+  color: {
+    size: 3,
+    data: new Float32Array([
+      1, 0, 0, 1, 0, 0, 1, 0, 0,
+
+      0, 1, 0, 0, 1, 0, 0, 1, 0,
+
+      0, 0, 1, 0, 0, 1, 0, 0, 1,
+
+      1, 0, 1, 1, 0, 1, 1, 0, 1,
+
+      1, 1, 0, 1, 1, 0, 1, 1, 0,
+
+      0, 1, 1, 0, 1, 1, 0, 1, 1,
+
+      0, 1, 1, 0, 1, 1, 0, 1, 1,
+
+      1, 0, 1, 1, 0, 1, 1, 0, 1,
+    ]),
+  },
+});
+
+const planeMesh = new Mesh(planeGeometry, material);
+boxMesh.add(planeMesh);
+planeMesh.position[0] += 2
+scene.add(boxMesh);
 
 camera.position[2] = -5;
 
@@ -126,8 +120,11 @@ window.addEventListener("resize", () => {
   camera.aspect = gl.canvas.width / gl.canvas.height;
   camera.updateCameraMatrix();
 });
+
 let t = 0;
-const rotation = mesh.rotation;
+
+const rotation = boxMesh.rotation;
+
 const animate = () => {
   quat.fromEuler(rotation, 0, t * 0.6, t * 0.1);
   renderer.render(scene, camera);

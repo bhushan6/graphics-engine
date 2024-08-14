@@ -1,4 +1,4 @@
-import { Geometry, Material, Scene } from ".";
+import { Geometry, Material, Mesh, Scene } from ".";
 import { createProgram } from "../exercise/utils";
 import { Camera } from "./Camera";
 
@@ -35,14 +35,26 @@ export class Renderer {
   public render(scene: Scene, camera: Camera) {
     this.gl.clearColor(1, 0.1, 0.5, 1);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-    // this.gl.clearDepth(1.0);
-
-    this.gl.enable(this.gl.CULL_FACE);
-    this.gl.cullFace(this.gl.BACK);
+    this.gl.clearDepth(1.0);
+    this.gl.enable(this.gl.DEPTH_TEST);
+    this.gl.disable(this.gl.CULL_FACE);
 
     camera.updateMatrix();
 
-    scene.meshes.forEach((mesh) => {
+    const renderableMeshes: Mesh[] = [];
+
+    scene.meshes.forEach(node => {
+      if(node instanceof Mesh) {
+        renderableMeshes.push(node);
+      }
+      node.traverse((child) => {
+        if(child instanceof Mesh) {
+          renderableMeshes.push(child);
+        }
+      })
+    })
+
+    renderableMeshes.forEach((mesh) => {
       mesh.updateMatrix();
       mesh.material.uniforms.modelMatrix = mesh.matrix;
       mesh.material.uniforms.viewMatrix = camera.matrix;
