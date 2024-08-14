@@ -1,1 +1,1 @@
-# storefront-template-validator
+# WebGL based graphics engine
