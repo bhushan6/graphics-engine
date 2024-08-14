@@ -1,5 +1,5 @@
 import { createGLContext, createProgram } from "./utils";
-import { mat4, quat, vec3, vec4 } from "gl-matrix";
+import { mat4, quat, vec3 } from "gl-matrix";
 
 // Model => View => Projection
 // Multiplication from Right to Left

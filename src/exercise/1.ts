@@ -11,7 +11,7 @@ const gl = createGLContext();
 // Link Program
 // Check if Shader is linked
 
-const program = createProgram(
+createProgram(
   gl,
   `#version 300 es
 
