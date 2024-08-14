@@ -1,1 +1,1 @@
-# graphics-engine
+# WebGL based graphics engine
