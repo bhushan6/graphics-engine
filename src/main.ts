@@ -50,7 +50,9 @@ const geometry = new Geometry({
 });
 
 const material = new Material({
-  uniforms: {},
+  uniforms: {
+    uColor: [1, 0.3, 0.6]
+  },
   vertexShader: `#version 300 es
 
   in vec3 position;
@@ -74,10 +76,12 @@ const material = new Material({
 
   in vec3 vColor;
 
+  uniform vec3 uColor;
+
   out vec4 fragColor;
 
   void main(){
-      fragColor = vec4(vColor, 1.0);
+      fragColor = vec4(uColor, 1.0);
   }
 `,
 });
@@ -150,6 +154,8 @@ const animate = () => {
 
   // quat.fromEuler(boxRotation, 0, t * 0.6, t * 0.1);
   // quat.fromEuler(planeRotation, 0, t * 1.6, 0);
+  material.uniforms.uColor[0] = Math.sin(t * 0.01);
+  material.uniforms.uColor[1] = Math.cos(t * 0.01);
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
   t++;

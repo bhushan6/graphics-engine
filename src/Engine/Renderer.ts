@@ -31,6 +31,33 @@ export class Renderer {
 
   // private _compiledAttributes: WeakMap<Geometry, WebGLBuffer> = new WeakMap();
 
+  private _setCommonUniforms = (
+    program: WebGLProgram,
+    camera: Camera,
+    mesh: Mesh
+  ) => {
+    const modelUniformLocation = this.gl.getUniformLocation(
+      program,
+      "modelMatrix"
+    );
+    const viewUniformLocation = this.gl.getUniformLocation(
+      program,
+      "viewMatrix"
+    );
+    const projectionUniformLocation = this.gl.getUniformLocation(
+      program,
+      "projectionMatrix"
+    );
+
+    this.gl.uniformMatrix4fv(modelUniformLocation, false, mesh.matrix);
+    this.gl.uniformMatrix4fv(viewUniformLocation, false, camera.matrix);
+    this.gl.uniformMatrix4fv(
+      projectionUniformLocation,
+      false,
+      camera.projectionMatrix
+    );
+  };
+
   public render(scene: Scene, camera: Camera) {
     this.gl.clearColor(0.9, 1, 0.9, 1);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
@@ -69,26 +96,32 @@ export class Renderer {
         this._compiledMaterials.set(mesh.material, program);
       }
       if (!program) throw new Error("no program");
-      const modelUniformLocation = this.gl.getUniformLocation(
-        program,
-        "modelMatrix"
-      );
-      const viewUniformLocation = this.gl.getUniformLocation(
-        program,
-        "viewMatrix"
-      );
-      const projectionUniformLocation = this.gl.getUniformLocation(
-        program,
-        "projectionMatrix"
-      );
 
-      this.gl.uniformMatrix4fv(modelUniformLocation, false, mesh.matrix);
-      this.gl.uniformMatrix4fv(viewUniformLocation, false, camera.matrix);
-      this.gl.uniformMatrix4fv(
-        projectionUniformLocation,
-        false,
-        camera.projectionMatrix
-      );
+      this._setCommonUniforms(program, camera, mesh);
+
+      Object.keys(mesh.material.uniforms).forEach((uniformName) => {
+        
+        const location = this.gl.getUniformLocation(program!, uniformName);
+        if(location !== -1){
+          const uniformValue = mesh.material.uniforms[uniformName];
+          if(typeof uniformValue === "number"){
+            this.gl.uniform1f(location, uniformValue);
+          }else {
+            switch (uniformValue.length) {
+              case 2:
+                return this.gl.uniform2fv(location, uniformValue)
+              case 3:
+                return this.gl.uniform3fv(location, uniformValue)
+              case 4:
+                return this.gl.uniform4fv(location, uniformValue)
+              case 9:
+                return this.gl.uniformMatrix3fv(location, false, uniformValue)
+              case 16:
+                return this.gl.uniformMatrix4fv(location, false, uniformValue)
+            }
+          }
+        }
+      })
 
       this.gl.useProgram(program);
       let vao = this._compiledGeometries.get(mesh.geometry) || null;
