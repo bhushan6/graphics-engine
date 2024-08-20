@@ -1,4 +1,4 @@
-import { quat } from "gl-matrix";
+import { mat4, quat, vec3, vec4 } from "gl-matrix";
 import { Geometry, Mesh, Renderer, Material, Scene } from "./Engine";
 import { Camera } from "./Engine/Camera";
 import "./style.css";
@@ -65,7 +65,7 @@ const material = new Material({
   out vec3 vColor;
 
   void main() {
-      vColor = color;
+      vColor = position;
       gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
   }
 `,
@@ -109,8 +109,9 @@ const planeGeometry = new Geometry({
 });
 
 const planeMesh = new Mesh(planeGeometry, material);
-boxMesh.add(planeMesh);
-planeMesh.position[0] += 2
+scene.add(planeMesh);
+planeMesh.position[0] += 1;
+boxMesh.position[0] -= 1;
 scene.add(boxMesh);
 
 camera.position[2] = -5;
@@ -122,14 +123,100 @@ window.addEventListener("resize", () => {
 });
 
 let t = 0;
+const boxRotation = boxMesh.rotation;
+const planeRotation = planeMesh.rotation;
 
-const rotation = boxMesh.rotation;
+const dummyMat = mat4.create();
+const center = vec3.create();
 
 const animate = () => {
-  quat.fromEuler(rotation, 0, t * 0.6, t * 0.1);
+  // const distance = vec3.distance(center, camera.position);
+
+  // camera.position[0] = Math.sin(t * 0.01) * distance;
+  // camera.position[2] = Math.cos(t * 0.01) * distance;
+
+  // mat4.lookAt(dummyMat, camera.position, center, [0, 1, 0]);
+
+  // mat4.getRotation(camera.rotation, dummyMat);
+  // mat4.getTranslation(camera.position, dummyMat);
+  // mat4.getScaling(camera.scale, dummyMat);
+
+  // const zoom = 1 + Math.sin(t * 0.01) * 0.01;
+  // camera.getWorldDirection(cameraForward);
+  // vec3.scale(cameraForward, cameraForward, zoom * 0.1);
+  // camera.position[0] += cameraForward[0];
+  // camera.position[1] += cameraForward[1];
+  // camera.position[2] += cameraForward[2];
+
+  // quat.fromEuler(boxRotation, 0, t * 0.6, t * 0.1);
+  // quat.fromEuler(planeRotation, 0, t * 1.6, 0);
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
   t++;
 };
+
+const cameraForward = vec3.create();
+
+gl.canvas.addEventListener("wheel", (e) => {
+  //@ts-expect-error
+  const zoom = e.wheelDeltaY;
+
+  camera.getWorldDirection(cameraForward);
+  vec3.scale(cameraForward, cameraForward, zoom * 0.1);
+  camera.position[0] += cameraForward[0];
+  camera.position[1] += cameraForward[1];
+  camera.position[2] += cameraForward[2];
+});
+
+let mouseDown = false;
+
+gl.canvas.addEventListener("pointerdown", () => {
+  mouseDown = true;
+});
+
+gl.canvas.addEventListener("pointerup", () => {
+  mouseDown = false;
+});
+
+gl.canvas.addEventListener("onblur", () => {
+  mouseDown = false;
+});
+
+let theta = 0;
+let phi = 0;
+
+const distance = vec3.distance(center, camera.position);
+camera.position[0] = Math.cos(theta * 0.01) * Math.cos(phi * 0.01) * distance;
+camera.position[1] = Math.sin(theta * 0.01) * distance;
+camera.position[2] = Math.cos(theta * 0.01) * Math.sin(phi * 0.01) * distance;
+
+mat4.lookAt(dummyMat, camera.position, center, [0, 1, 0]);
+
+mat4.getRotation(camera.rotation, dummyMat);
+mat4.getTranslation(camera.position, dummyMat);
+mat4.getScaling(camera.scale, dummyMat);
+
+gl.canvas.addEventListener("pointermove", (e) => {
+  if (!mouseDown) return;
+  //@ts-expect-error
+  const deltaX = e.movementX;
+  //@ts-expect-error
+  const deltaY = e.movementY;
+  console.log(deltaX, deltaY);
+  const distance = vec3.distance(center, camera.position);
+
+  theta += deltaY;
+  phi += deltaX;
+
+  camera.position[0] = Math.cos(theta * 0.01) * Math.cos(phi * 0.01) * distance;
+  camera.position[1] = Math.sin(theta * 0.01) * distance;
+  camera.position[2] = Math.cos(theta * 0.01) * Math.sin(phi * 0.01) * distance;
+
+  mat4.lookAt(dummyMat, camera.position, center, [0, 1, 0]);
+
+  mat4.getRotation(camera.rotation, dummyMat);
+  mat4.getTranslation(camera.position, dummyMat);
+  mat4.getScaling(camera.scale, dummyMat);
+});
 
 animate();

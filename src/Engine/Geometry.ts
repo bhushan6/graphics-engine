@@ -13,6 +13,16 @@ export type AttributeInterface = {
   size: number;
   needsUpdate?: boolean;
 };
+
+// export class Attribute {
+//   public data: AttributeData;
+//   public size: number;
+//   public needsUpdate: boolean = true;
+//   constructor(AttributeData: AttributeInterface) {
+//     this.data = AttributeData.data;
+//     this.size = AttributeData.size;
+//   }
+// }
 export class Geometry {
   private _attributes: { [key: string]: AttributeInterface } = {};
 
