@@ -154,7 +154,9 @@ const animate = () => {
 
   // quat.fromEuler(boxRotation, 0, t * 0.6, t * 0.1);
   // quat.fromEuler(planeRotation, 0, t * 1.6, 0);
+  //@ts-expect-error
   material.uniforms.uColor[0] = Math.sin(t * 0.01);
+  //@ts-expect-error
   material.uniforms.uColor[1] = Math.cos(t * 0.01);
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
