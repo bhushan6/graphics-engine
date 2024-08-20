@@ -1,22 +1,5 @@
-import { Mesh } from ".";
+import { Object3D } from "./Object3D";
 
-export class Scene {
-
-  private _meshes: Mesh[] = [];
-
-  constructor() {}
-
-  public add(mesh: Mesh) {
-    this._meshes.push(mesh);
-  }
-
-  public remove(mesh: Mesh) {
-    this._meshes = this._meshes.filter((m) => m !== mesh);
-  }
-
-  public get meshes() {
-    return this._meshes;
-  }
-
-  public render() {}
+export class Scene extends Object3D {
+  isScene = true;
 }

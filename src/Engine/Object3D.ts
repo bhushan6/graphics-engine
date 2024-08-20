@@ -85,12 +85,6 @@ export class Object3D {
   }
 
   public get matrix(): mat4 {
-    // mat4.fromRotationTranslationScale(
-    //   this._matrix,
-    //   this._rotation,
-    //   this._position,
-    //   this._scale
-    // );
     return this._matrix;
   }
 
@@ -98,4 +92,20 @@ export class Object3D {
     if (callback(this)) return;
     for (const child of this._children) child.traverse(callback);
   }
+
+  public get children () {
+    return this._children;
+  }
+
+  getWorldDirection( target: vec3 ): vec3 {
+
+		this.updateMatrix();
+
+		const e = this.matrix;
+    target[ 0 ] = e[ 8 ];
+    target[ 1 ] = e[ 9 ];
+    target[ 2 ] = e[ 10 ];
+    
+    return vec3.normalize( target, target );
+	}
 }

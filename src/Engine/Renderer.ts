@@ -1,7 +1,6 @@
 import { Geometry, Material, Mesh, Scene } from ".";
 import { createProgram } from "../exercise/utils";
 import { Camera } from "./Camera";
-
 export class Renderer {
   private canvas: HTMLCanvasElement;
   public gl: WebGL2RenderingContext;
@@ -33,7 +32,7 @@ export class Renderer {
   // private _compiledAttributes: WeakMap<Geometry, WebGLBuffer> = new WeakMap();
 
   public render(scene: Scene, camera: Camera) {
-    this.gl.clearColor(1, 0.1, 0.5, 1);
+    this.gl.clearColor(0.9, 1, 0.9, 1);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     this.gl.clearDepth(1.0);
     this.gl.enable(this.gl.DEPTH_TEST);
@@ -43,16 +42,16 @@ export class Renderer {
 
     const renderableMeshes: Mesh[] = [];
 
-    scene.meshes.forEach(node => {
-      if(node instanceof Mesh) {
+    scene.children.forEach((node) => {
+      if (node instanceof Mesh) {
         renderableMeshes.push(node);
       }
       node.traverse((child) => {
-        if(child instanceof Mesh) {
+        if (child instanceof Mesh) {
           renderableMeshes.push(child);
         }
-      })
-    })
+      });
+    });
 
     renderableMeshes.forEach((mesh) => {
       mesh.updateMatrix();
@@ -108,7 +107,7 @@ export class Renderer {
               : this.gl.ARRAY_BUFFER;
           this.gl.bindBuffer(type, buffer);
           this.gl.bufferData(type, attributeData.data, this.gl.STATIC_DRAW);
-          console.log(attribName, attributeData.data, type);
+          // console.log(attribName, attributeData.data, type);
 
           if (attribName !== "index") {
             const attribLocation = this.gl.getAttribLocation(
