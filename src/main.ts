@@ -2,7 +2,7 @@ import { mat4, quat, vec3 } from "gl-matrix";
 import { Geometry, Mesh, Renderer, Material, Scene, Texture } from "./Engine";
 import { Camera } from "./Engine/Camera";
 import "./style.css";
-import { getBoxGeomertyData, getPlaneGeomertyData } from "./Engine/utils";
+import { getBoxGeometryData, getPlaneGeometryData } from "./Engine/utils";
 
 const canvas = document.getElementById("webglCanvas") as HTMLCanvasElement;
 
@@ -23,8 +23,8 @@ const camera = new Camera({
   far: 100,
 });
 
-const boxAttributes = getBoxGeomertyData();
-const planeAttributes = getPlaneGeomertyData();
+const boxAttributes = getBoxGeometryData();
+const planeAttributes = getPlaneGeometryData();
 const geometry = new Geometry({
   ...boxAttributes,
   color: {
@@ -214,24 +214,6 @@ const getUpDirection = (cameraPosition: vec3, targetPosition: vec3) => {
 };
 
 const animate = () => {
-  // const distance = vec3.distance(center, camera.position);
-
-  // camera.position[0] = Math.sin(t * 0.01) * distance;
-  // camera.position[2] = Math.cos(t * 0.01) * distance;
-
-  // mat4.lookAt(dummyMat, camera.position, center, [0, 1, 0]);
-
-  // mat4.getRotation(camera.rotation, dummyMat);
-  // mat4.getTranslation(camera.position, dummyMat);
-  // mat4.getScaling(camera.scale, dummyMat);
-
-  // const zoom = 1 + Math.sin(t * 0.01) * 0.01;
-  // camera.getWorldDirection(cameraForward);
-  // vec3.scale(cameraForward, cameraForward, zoom * 0.1);
-  // camera.position[0] += cameraForward[0];
-  // camera.position[1] += cameraForward[1];
-  // camera.position[2] += cameraForward[2];
-
   quat.fromEuler(boxRotation, 0, t * 0.6, t * 0.1);
   quat.fromEuler(planeRotation, 0, t * 1.6, 0);
   //@ts-expect-error
@@ -243,13 +225,11 @@ const animate = () => {
   t++;
 };
 
-// const cameraForward = vec3.create();
 
 gl.canvas.addEventListener("wheel", (e) => {
   //@ts-expect-error
   const zoom = e.wheelDeltaY;
 
-  // camera.getWorldDirection(cameraForward);
   const cameraForward = getCameraForward(camera.position, center);
   vec3.scale(cameraForward, cameraForward, zoom * 0.1);
   camera.position[0] += cameraForward[0];
@@ -291,7 +271,6 @@ gl.canvas.addEventListener("pointermove", (e) => {
   const deltaX = e.movementX;
   //@ts-expect-error
   const deltaY = e.movementY;
-  // console.log(deltaX, deltaY);
 
   theta += deltaY * 0.01;
   phi += deltaX * 0.01;

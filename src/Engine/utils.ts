@@ -1,4 +1,4 @@
-export const getBoxGeomertyData = () => {
+export const getBoxGeometryData = () => {
   return {
     position: {
       size: 3,
@@ -37,7 +37,7 @@ export const getBoxGeomertyData = () => {
   };
 };
 
-export const getPlaneGeomertyData = () => {
+export const getPlaneGeometryData = () => {
   return {
     position: {
       size: 3,
