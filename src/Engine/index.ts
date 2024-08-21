@@ -3,3 +3,4 @@ export { Mesh } from "./Mesh.ts";
 export { Geometry } from "./Geometry.ts";
 export { Material } from "./Material.ts";
 export { Scene } from "./Scene.ts";
+export { Texture } from "./Texture.ts";

@@ -1,4 +1,6 @@
-type UniformType = number | number[] | Float32Array;
+import { Texture } from ".";
+
+type UniformType = number | number[] | Float32Array | Texture;
 export class Material {
   public uniforms: { [key: string]: UniformType };
   private _vertexShader: string;

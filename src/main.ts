@@ -1,5 +1,5 @@
-import { mat4, quat, vec3, vec4 } from "gl-matrix";
-import { Geometry, Mesh, Renderer, Material, Scene } from "./Engine";
+import { mat4, vec3 } from "gl-matrix";
+import { Geometry, Mesh, Renderer, Material, Scene, Texture } from "./Engine";
 import { Camera } from "./Engine/Camera";
 import "./style.css";
 import { getBoxGeomertyData, getPlaneGeomertyData } from "./Engine/utils";
@@ -51,11 +51,13 @@ const geometry = new Geometry({
 
 const material = new Material({
   uniforms: {
-    uColor: [1, 0.3, 0.6]
+    uColor: [1, 0.3, 0.6],
+    uTexture: new Texture("/cat.jpeg"),
   },
   vertexShader: `#version 300 es
 
   in vec3 position;
+  in vec2 uv;
 
   uniform mat4 modelMatrix;
   uniform mat4 viewMatrix;
@@ -64,10 +66,13 @@ const material = new Material({
   in vec3 normal;
 
   in vec3 color;
+
   out vec3 vColor;
+  out vec2 vUv;
 
   void main() {
       vColor = position;
+      vUv = uv;
       gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
   }
 `,
@@ -75,18 +80,74 @@ const material = new Material({
   precision highp float;
 
   in vec3 vColor;
+  in vec2 vUv;
 
   uniform vec3 uColor;
+  uniform sampler2D uTexture;
 
   out vec4 fragColor;
 
   void main(){
-      fragColor = vec4(uColor, 1.0);
+      vec4 tex = texture(uTexture, vUv);
+      fragColor = vec4(uColor, 1.0) * tex;
   }
 `,
 });
 
-const boxMesh = new Mesh(geometry, material);
+const material2 = new Material({
+  uniforms: {
+    uColor: [1, 0.3, 0.6],
+    uTexture: new Texture("/test.jpeg"),
+  },
+  vertexShader: `#version 300 es
+
+  in vec3 position;
+  in vec2 uv;
+
+  uniform mat4 modelMatrix;
+  uniform mat4 viewMatrix;
+  uniform mat4 projectionMatrix;
+
+  in vec3 normal;
+
+  in vec3 color;
+
+  out vec3 vColor;
+  out vec2 vUv;
+
+  void main() {
+      vColor = position;
+      vUv = uv;
+      gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
+  }
+`,
+  fragmentShader: `#version 300 es
+  precision highp float;
+
+  in vec3 vColor;
+  in vec2 vUv;
+
+  uniform vec3 uColor;
+  uniform sampler2D uTexture;
+
+  out vec4 fragColor;
+
+  void main(){
+      vec4 tex = texture(uTexture, vUv);
+      fragColor = vec4(uColor, 1.0) * tex;
+  }
+`,
+});
+
+const boxMesh = new Mesh(geometry, material2);
+
+// for (let i = 0; i < 1000; i++) {
+//   const boxMesh = new Mesh(geometry, material);
+//   boxMesh.position[0] = Math.random() * 20 - 10;
+//   boxMesh.position[1] = Math.random() * 20 - 10;
+//   boxMesh.position[2] = Math.random() * 20 - 10;
+//   scene.add(boxMesh);
+// }
 
 const planeGeometry = new Geometry({
   ...planeAttributes,
@@ -127,8 +188,8 @@ window.addEventListener("resize", () => {
 });
 
 let t = 0;
-const boxRotation = boxMesh.rotation;
-const planeRotation = planeMesh.rotation;
+// const boxRotation = boxMesh.rotation;
+// const planeRotation = planeMesh.rotation;
 
 const dummyMat = mat4.create();
 const center = vec3.create();
@@ -191,12 +252,12 @@ gl.canvas.addEventListener("onblur", () => {
 });
 
 let theta = 0;
-let phi = 0;
+let phi = Math.PI/2;
 
 const distance = vec3.distance(center, camera.position);
-camera.position[0] = Math.cos(theta * 0.01) * Math.cos(phi * 0.01) * distance;
-camera.position[1] = Math.sin(theta * 0.01) * distance;
-camera.position[2] = Math.cos(theta * 0.01) * Math.sin(phi * 0.01) * distance;
+camera.position[0] = Math.cos(theta) * Math.cos(phi) * distance;
+camera.position[1] = Math.sin(theta) * distance;
+camera.position[2] = Math.cos(theta) * Math.sin(phi) * distance;
 
 mat4.lookAt(dummyMat, camera.position, center, [0, 1, 0]);
 
@@ -213,12 +274,12 @@ gl.canvas.addEventListener("pointermove", (e) => {
   console.log(deltaX, deltaY);
   const distance = vec3.distance(center, camera.position);
 
-  theta += deltaY;
-  phi += deltaX;
+  theta += deltaY * 0.01;
+  phi += deltaX * 0.01;
 
-  camera.position[0] = Math.cos(theta * 0.01) * Math.cos(phi * 0.01) * distance;
-  camera.position[1] = Math.sin(theta * 0.01) * distance;
-  camera.position[2] = Math.cos(theta * 0.01) * Math.sin(phi * 0.01) * distance;
+  camera.position[0] = Math.cos(theta) * Math.cos(phi) * distance;
+  camera.position[1] = Math.sin(theta) * distance;
+  camera.position[2] = Math.cos(theta) * Math.sin(phi) * distance;
 
   mat4.lookAt(dummyMat, camera.position, center, [0, 1, 0]);
 
@@ -228,3 +289,5 @@ gl.canvas.addEventListener("pointermove", (e) => {
 });
 
 animate();
+
+// console.log(SharedArrayBuffer);

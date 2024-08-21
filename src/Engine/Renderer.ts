@@ -1,4 +1,4 @@
-import { Geometry, Material, Mesh, Scene } from ".";
+import { Geometry, Material, Mesh, Scene, Texture } from ".";
 import { createProgram } from "../exercise/utils";
 import { Camera } from "./Camera";
 export class Renderer {
@@ -28,6 +28,19 @@ export class Renderer {
   private _compiledGeometries: WeakMap<Geometry, WebGLVertexArrayObject> =
     new WeakMap();
   private _compiledMaterials: WeakMap<Material, WebGLProgram> = new WeakMap();
+  private _compiledTextures: WeakMap<
+    /**
+     * Sets the texture uniforms for a WebGL program.
+     *
+     * @param program - The WebGL program to set the texture uniforms for.
+     * @param name - The name of the texture uniform in the program.
+     * @param texture - The texture to set the uniform for.
+     * @param textureIndex - The index of the texture unit to bind the texture to.
+     */
+
+    Texture,
+    { glTexture: WebGLTexture; location: WebGLUniformLocation }
+  > = new WeakMap();
 
   // private _compiledAttributes: WeakMap<Geometry, WebGLBuffer> = new WeakMap();
 
@@ -56,6 +69,47 @@ export class Renderer {
       false,
       camera.projectionMatrix
     );
+  };
+
+  private _initTexture = (img: Texture) => {
+    const texture = this.gl.createTexture();
+    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+    this.gl.texImage2D(
+      this.gl.TEXTURE_2D,
+      0,
+      this.gl.RGB,
+      img.data!.width,
+      img.data!.height,
+      0,
+      this.gl.RGB,
+      this.gl.UNSIGNED_BYTE,
+      img.data!
+    );
+    this.gl.generateMipmap(this.gl.TEXTURE_2D);
+    return texture;
+  };
+
+  private _setTextureUniforms = (
+    program: WebGLProgram,
+    name: string,
+    texture: Texture,
+    textureIndex: number
+  ) => {
+    if (!texture.data) return;
+    let compiledTexture = this._compiledTextures.get(texture) || null;
+
+    if (!compiledTexture) {
+      const location = this.gl.getUniformLocation(program, name);
+      if (!location) return;
+      compiledTexture = {
+        glTexture: this._initTexture(texture)!,
+        location: location,
+      };
+      this._compiledTextures.set(texture, compiledTexture);
+    }
+    this.gl.uniform1i(compiledTexture.location, textureIndex);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, compiledTexture.glTexture);
+    textureIndex++;
   };
 
   public render(scene: Scene, camera: Camera) {
@@ -97,32 +151,6 @@ export class Renderer {
       }
       if (!program) throw new Error("no program");
 
-      this._setCommonUniforms(program, camera, mesh);
-
-      Object.keys(mesh.material.uniforms).forEach((uniformName) => {
-        
-        const location = this.gl.getUniformLocation(program!, uniformName);
-        if(location !== -1){
-          const uniformValue = mesh.material.uniforms[uniformName];
-          if(typeof uniformValue === "number"){
-            this.gl.uniform1f(location, uniformValue);
-          }else {
-            switch (uniformValue.length) {
-              case 2:
-                return this.gl.uniform2fv(location, uniformValue)
-              case 3:
-                return this.gl.uniform3fv(location, uniformValue)
-              case 4:
-                return this.gl.uniform4fv(location, uniformValue)
-              case 9:
-                return this.gl.uniformMatrix3fv(location, false, uniformValue)
-              case 16:
-                return this.gl.uniformMatrix4fv(location, false, uniformValue)
-            }
-          }
-        }
-      })
-
       this.gl.useProgram(program);
       let vao = this._compiledGeometries.get(mesh.geometry) || null;
       vao && this.gl.bindVertexArray(vao);
@@ -163,6 +191,52 @@ export class Renderer {
         });
       }
 
+      this._setCommonUniforms(program, camera, mesh);
+      let textureIndex = 0;
+      Object.keys(mesh.material.uniforms).forEach((uniformName) => {
+        const location = this.gl.getUniformLocation(program!, uniformName);
+        if (location !== -1) {
+          // console.log(location, uniformName);
+
+          const uniformValue = mesh.material.uniforms[uniformName];
+          if (typeof uniformValue === "number") {
+            this.gl.uniform1f(location, uniformValue);
+          } else if (uniformValue instanceof Texture) {
+            // console.log(uniformValue);
+
+            this._setTextureUniforms(
+              program!,
+              uniformName,
+              uniformValue,
+              textureIndex
+            );
+          } else {
+            // console.log(uniformValue);
+
+            switch (uniformValue.length) {
+              case 2:
+                this.gl.uniform2fv(location, uniformValue);
+                break;
+              case 3:
+                this.gl.uniform3fv(location, uniformValue);
+                break;
+              case 4:
+                this.gl.uniform4fv(location, uniformValue);
+                break;
+              case 9:
+                this.gl.uniformMatrix3fv(location, false, uniformValue);
+                break;
+              case 16:
+                this.gl.uniformMatrix4fv(location, false, uniformValue);
+                break;
+              default:
+                console.log("idk");
+                break;
+            }
+          }
+        }
+      });
+
       this.gl.drawElements(
         this.gl.TRIANGLES,
         mesh.geometry.indices.length,
@@ -170,6 +244,7 @@ export class Renderer {
         0
       );
       this.gl.bindVertexArray(null);
+      // this.gl.bindTexture(this.gl.TEXTURE_2D, null);
     });
   }
 }
