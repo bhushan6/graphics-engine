@@ -1,6 +1,5 @@
 import { mat4, quat, vec3, vec4 } from "gl-matrix";
 import { Mesh } from ".";
-
 export class Object3D {
   private _rotation = quat.fromValues(0, 0, 0, 1);
   private _position: vec3 = vec3.create();
@@ -93,19 +92,7 @@ export class Object3D {
     for (const child of this._children) child.traverse(callback);
   }
 
-  public get children () {
+  public get children() {
     return this._children;
   }
-
-  getWorldDirection( target: vec3 ): vec3 {
-
-		this.updateMatrix();
-
-		const e = this.matrix;
-    target[ 0 ] = e[ 8 ];
-    target[ 1 ] = e[ 9 ];
-    target[ 2 ] = e[ 10 ];
-    
-    return vec3.normalize( target, target );
-	}
 }
