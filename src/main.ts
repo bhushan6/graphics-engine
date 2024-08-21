@@ -179,7 +179,7 @@ planeMesh.position[0] += 1;
 boxMesh.position[0] -= 1;
 scene.add(boxMesh);
 
-camera.position[2] = -5;
+camera.position[2] = -50;
 
 window.addEventListener("resize", () => {
   renderer.resize(window.innerWidth, window.innerHeight);
@@ -235,6 +235,8 @@ gl.canvas.addEventListener("wheel", (e) => {
   camera.position[0] += cameraForward[0];
   camera.position[1] += cameraForward[1];
   camera.position[2] += cameraForward[2];
+
+  // camera.position = {x: camera.position[0], y : camera.position[1], z: camera.position[2]};
 });
 
 let mouseDown = false;
@@ -286,6 +288,11 @@ gl.canvas.addEventListener("pointermove", (e) => {
   mat4.getRotation(camera.rotation, dummyMat);
   mat4.getTranslation(camera.position, dummyMat);
   mat4.getScaling(camera.scale, dummyMat);
+
+  // camera.position = {x: camera.position[0], y : camera.position[1], z: camera.position[2]};
+  // camera.rotation = {x: camera.rotation[0], y : camera.rotation[1], z: camera.rotation[2], w: camera.rotation[3]};
+  // camera.scale = {x: camera.scale[0], y : camera.scale[1], z: camera.scale[2]};
+
 });
 
 animate();

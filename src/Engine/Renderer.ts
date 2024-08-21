@@ -1,6 +1,7 @@
 import { Geometry, Material, Mesh, Scene, Texture } from ".";
 import { createProgram } from "../exercise/utils";
 import { Camera } from "./Camera";
+import { UniformType } from "./Material";
 export class Renderer {
   private canvas: HTMLCanvasElement;
   public gl: WebGL2RenderingContext;
@@ -29,47 +30,64 @@ export class Renderer {
     new WeakMap();
   private _compiledMaterials: WeakMap<Material, WebGLProgram> = new WeakMap();
   private _compiledTextures: WeakMap<
-    /**
-     * Sets the texture uniforms for a WebGL program.
-     *
-     * @param program - The WebGL program to set the texture uniforms for.
-     * @param name - The name of the texture uniform in the program.
-     * @param texture - The texture to set the uniform for.
-     * @param textureIndex - The index of the texture unit to bind the texture to.
-     */
-
     Texture,
     { glTexture: WebGLTexture; location: WebGLUniformLocation }
   > = new WeakMap();
 
-  // private _compiledAttributes: WeakMap<Geometry, WebGLBuffer> = new WeakMap();
+  private _compiledUniforms: WeakMap<
+    { value: UniformType } ,
+    WebGLUniformLocation
+  > = new WeakMap();
 
-  private _setCommonUniforms = (
-    program: WebGLProgram,
-    camera: Camera,
-    mesh: Mesh
-  ) => {
-    const modelUniformLocation = this.gl.getUniformLocation(
-      program,
-      "modelMatrix"
-    );
-    const viewUniformLocation = this.gl.getUniformLocation(
-      program,
-      "viewMatrix"
-    );
-    const projectionUniformLocation = this.gl.getUniformLocation(
-      program,
-      "projectionMatrix"
-    );
-
-    this.gl.uniformMatrix4fv(modelUniformLocation, false, mesh.matrix);
-    this.gl.uniformMatrix4fv(viewUniformLocation, false, camera.matrix);
-    this.gl.uniformMatrix4fv(
-      projectionUniformLocation,
-      false,
-      camera.projectionMatrix
-    );
-  };
+  private _setUniforms = (program: WebGLProgram, uniforms: { [key: string]: {value: UniformType} }) => {
+    let textureIndex = 0
+    // co
+    Object.keys(uniforms).forEach((uniformName) => {
+      const uniform = uniforms[uniformName]
+      const uniformValue = uniform.value;
+      if (!uniformValue) return;
+      
+      let location = this._compiledUniforms.get(uniform) || null
+      if (!location) {
+        location = this.gl.getUniformLocation(program!, uniformName);
+        if(!location) return;
+        this._compiledUniforms.set(uniform, location);
+      }
+      if (location) {
+        if (typeof uniformValue === "number") {
+          this.gl.uniform1f(location, uniformValue);
+        } else if (uniformValue instanceof Texture) {
+          this._setTextureUniforms(
+            program!,
+            uniformName,
+            uniformValue,
+            textureIndex
+          );
+        } else {
+          switch (uniformValue.length) {
+            case 2:
+              this.gl.uniform2fv(location, uniformValue);
+              break;
+            case 3:
+              this.gl.uniform3fv(location, uniformValue);
+              break;
+            case 4:
+              this.gl.uniform4fv(location, uniformValue);
+              break;
+            case 9:
+              this.gl.uniformMatrix3fv(location, false, uniformValue);
+              break;
+            case 16:
+              this.gl.uniformMatrix4fv(location, false, uniformValue);
+              break;
+            default:
+              console.log("idk");
+              break;
+          }
+        }
+      }
+    });
+  }
 
   private _initTexture = (img: Texture) => {
     const texture = this.gl.createTexture();
@@ -95,6 +113,9 @@ export class Renderer {
     texture: Texture,
     textureIndex: number
   ) => {
+    if (textureIndex > 0) return;
+    // console.log(textureIndex);
+
     if (!texture.data) return;
     let compiledTexture = this._compiledTextures.get(texture) || null;
 
@@ -108,6 +129,7 @@ export class Renderer {
       this._compiledTextures.set(texture, compiledTexture);
     }
     this.gl.uniform1i(compiledTexture.location, textureIndex);
+    this.gl.activeTexture(this.gl.TEXTURE0 + textureIndex);
     this.gl.bindTexture(this.gl.TEXTURE_2D, compiledTexture.glTexture);
     textureIndex++;
   };
@@ -136,9 +158,11 @@ export class Renderer {
 
     renderableMeshes.forEach((mesh) => {
       mesh.updateMatrix();
-      mesh.material.uniforms.modelMatrix = mesh.matrix;
-      mesh.material.uniforms.viewMatrix = camera.matrix;
-      mesh.material.uniforms.projectionMatrix = camera.projectionMatrix;
+      
+      //inject internal uniforms
+      mesh.material.uniforms.modelMatrix.value = mesh.matrix;
+      mesh.material.uniforms.viewMatrix.value = camera.matrix;
+      mesh.material.uniforms.projectionMatrix.value = camera.projectionMatrix;
 
       let program = this._compiledMaterials.get(mesh.material) || null;
       if (!program) {
@@ -191,51 +215,7 @@ export class Renderer {
         });
       }
 
-      this._setCommonUniforms(program, camera, mesh);
-      let textureIndex = 0;
-      Object.keys(mesh.material.uniforms).forEach((uniformName) => {
-        const location = this.gl.getUniformLocation(program!, uniformName);
-        if (location !== -1) {
-          // console.log(location, uniformName);
-
-          const uniformValue = mesh.material.uniforms[uniformName];
-          if (typeof uniformValue === "number") {
-            this.gl.uniform1f(location, uniformValue);
-          } else if (uniformValue instanceof Texture) {
-            // console.log(uniformValue);
-
-            this._setTextureUniforms(
-              program!,
-              uniformName,
-              uniformValue,
-              textureIndex
-            );
-          } else {
-            // console.log(uniformValue);
-
-            switch (uniformValue.length) {
-              case 2:
-                this.gl.uniform2fv(location, uniformValue);
-                break;
-              case 3:
-                this.gl.uniform3fv(location, uniformValue);
-                break;
-              case 4:
-                this.gl.uniform4fv(location, uniformValue);
-                break;
-              case 9:
-                this.gl.uniformMatrix3fv(location, false, uniformValue);
-                break;
-              case 16:
-                this.gl.uniformMatrix4fv(location, false, uniformValue);
-                break;
-              default:
-                console.log("idk");
-                break;
-            }
-          }
-        }
-      });
+      this._setUniforms(program, mesh.material.uniforms);
 
       this.gl.drawElements(
         this.gl.TRIANGLES,
@@ -244,7 +224,6 @@ export class Renderer {
         0
       );
       this.gl.bindVertexArray(null);
-      // this.gl.bindTexture(this.gl.TEXTURE_2D, null);
     });
   }
 }

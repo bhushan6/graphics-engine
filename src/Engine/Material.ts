@@ -1,8 +1,8 @@
 import { Texture } from ".";
 
-type UniformType = number | number[] | Float32Array | Texture;
+export type UniformType = number | number[] | Float32Array | Texture | null;
 export class Material {
-  public uniforms: { [key: string]: UniformType };
+  public uniforms: { [key: string]: { value: UniformType } };
   private _vertexShader: string;
   private _fragmentShader: string;
 
@@ -17,7 +17,14 @@ export class Material {
     fragmentShader: string;
     uniforms: { [key: string]: UniformType };
   }) {
-    this.uniforms = uniforms;
+    this.uniforms = {
+      modelMatrix: { value: null },
+      viewMatrix: { value: null },
+      projectionMatrix: { value: null },
+    };
+    Object.keys(uniforms).forEach((uniformName) => {
+      this.uniforms[uniformName] = { value: uniforms[uniformName] };
+    });
     this._vertexShader = vertexShader;
     this._fragmentShader = fragmentShader;
   }
