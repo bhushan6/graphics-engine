@@ -275,14 +275,14 @@ gl.canvas.addEventListener("pointermove", (e) => {
   theta += deltaY * 0.01;
   phi += deltaX * 0.01;
 
-  const distance = Math.abs(vec3.distance(center, camera.position));
-
+  const distance = vec3.distance(center, camera.position);
+ 
   const newPos: [number, number, number] = [
     Math.cos(theta) * Math.cos(phi) * distance,
     Math.sin(theta) * distance,
     Math.cos(theta) * Math.sin(phi) * distance,
   ];
-  const upVector = getUpDirection(camera.position, center);
+  const upVector = getUpDirection(newPos, center);
   mat4.lookAt(dummyMat, newPos, center, upVector);
 
   mat4.getRotation(camera.rotation, dummyMat);

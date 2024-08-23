@@ -1,7 +1,8 @@
 import { Geometry, Material, Mesh, Scene, Texture } from ".";
-import { createProgram } from "../exercise/utils";
+
 import { Camera } from "./Camera";
 import { UniformType } from "./Material";
+import { createProgram } from "./utils";
 export class Renderer {
   private canvas: HTMLCanvasElement;
   public gl: WebGL2RenderingContext;
@@ -158,7 +159,6 @@ export class Renderer {
 
     renderableMeshes.forEach((mesh) => {
       mesh.updateMatrix();
-      
       //inject internal uniforms
       mesh.material.uniforms.modelMatrix.value = mesh.matrix;
       mesh.material.uniforms.viewMatrix.value = camera.matrix;
