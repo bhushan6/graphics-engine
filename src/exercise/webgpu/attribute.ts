@@ -9,10 +9,11 @@ struct VertexOutput {
 @vertex
 fn vs_main(
     @location(0) inPos: vec3<f32>,
+    @location(1) inColor: vec3<f32>,
 ) -> VertexOutput {
     var out: VertexOutput;
-    out.clip_position = vec4<f32>(inPos.x, inPos.y, 0.0, 1.0);
-    out.color = vec3<f32>(0.0, 0.4, 0.9);
+    out.clip_position = vec4<f32>(inPos, 1.0);
+    out.color = inColor;
     return out;
 }
 
@@ -63,7 +64,9 @@ const webgpu = async () => {
     usage: GPUTextureUsage.RENDER_ATTACHMENT,
   });
 
-  const positions = new Float32Array([1.0, -1.0, 0.0, -1.0, -1.0, 0.0, 0.0, 1.0, 0.0]);
+  const positions = new Float32Array([
+    1.0, -1.0, 0.0, -1.0, -1.0, 0.0, 0.0, 1.0, 0.0,
+  ]);
 
   const positionBufferDesc = {
     size: positions.byteLength,
@@ -76,6 +79,46 @@ const webgpu = async () => {
   const writeArray = new Float32Array(positionBuffer.getMappedRange());
   writeArray.set(positions);
   positionBuffer.unmap();
+
+  const positionAttribute: GPUVertexAttribute = {
+    shaderLocation: 0,
+    offset: 0,
+    format: "float32x3",
+  };
+
+  const positionBufferVertexLayout: GPUVertexBufferLayout = {
+    attributes: [positionAttribute],
+    arrayStride: positions.BYTES_PER_ELEMENT * 3,
+    stepMode: "vertex",
+  };
+
+  const colors = new Float32Array([
+    0.0, 1.0, 0.0, 0.0, 0.4, 0.2, 0.0, 0.0, 1.0,
+  ]);
+
+  const colorBufferDesc: GPUBufferDescriptor = {
+    size: colors.byteLength,
+    usage: GPUBufferUsage.VERTEX,
+    mappedAtCreation: true,
+  };
+
+  const colorBuffer = device.createBuffer(colorBufferDesc);
+
+  const colorWriteArray = new Float32Array(colorBuffer.getMappedRange());
+  colorWriteArray.set(colors);
+  colorBuffer.unmap();
+
+  const colorAttribute: GPUVertexAttribute = {
+    shaderLocation: 1,
+    offset: 0,
+    format: "float32x3",
+  };
+
+  const colorBufferVertexLayout: GPUVertexBufferLayout = {
+    arrayStride: colors.BYTES_PER_ELEMENT * 3,
+    attributes: [colorAttribute],
+    stepMode: "vertex",
+  };
 
   const shaderModule = device.createShaderModule({
     code: shader,
@@ -94,19 +137,7 @@ const webgpu = async () => {
     vertex: {
       module: shaderModule,
       entryPoint: "vs_main",
-      buffers: [
-        {
-          attributes: [
-            {
-              shaderLocation: 0,
-              offset: 0,
-              format: "float32x3",
-            },
-          ],
-          arrayStride: positions.BYTES_PER_ELEMENT * 3,
-          stepMode: "vertex",
-        },
-      ],
+      buffers: [positionBufferVertexLayout, colorBufferVertexLayout],
     },
     fragment: {
       module: shaderModule,
@@ -140,6 +171,7 @@ const webgpu = async () => {
   passEncoder.setViewport(0, 0, canvas.width, canvas.height, 0, 1);
   passEncoder.setPipeline(pipeline);
   passEncoder.setVertexBuffer(0, positionBuffer);
+  passEncoder.setVertexBuffer(1, colorBuffer);
   passEncoder.draw(3, 1);
   passEncoder.end();
 
